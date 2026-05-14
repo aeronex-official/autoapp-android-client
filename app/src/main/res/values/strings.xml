@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">AutoApp Store</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="phone_or_email">Phone or Email</string>
+    <string name="password">Password</string>
+    <string name="name">Name</string>
+    <string name="no_account">No account? Register</string>
+    <string name="has_account">Already have account? Login</string>
+    <string name="apps">Apps</string>
+    <string name="my_apps">My Apps</string>
+    <string name="account">Account</string>
+    <string name="download">Download</string>
+    <string name="install">Install</string>
+    <string name="update">Update</string>
+    <string name="open">Open</string>
+    <string name="subscribe_to_download">Subscribe to download</string>
+    <string name="subscription_active">Subscription Active</string>
+    <string name="subscription_expired">Subscription Expired</string>
+    <string name="category_navigation">Navigation</string>
+    <string name="category_music">Music</string>
+    <string name="category_communication">Communication</string>
+    <string name="category_video">Video</string>
+    <string name="logout">Logout</string>
+</resources>
