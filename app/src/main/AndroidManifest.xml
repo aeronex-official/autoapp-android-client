@@ -10,21 +10,21 @@
     <!-- 安装权限 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <!-- 存储权限（用于保存下载的 APK） -->
+    <!-- 存储权限（Android 9 及以下写外部存储需要） -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
-    <!-- 前台服务权限（Android 9+，DownloadService 必须） -->
+    <!-- 前台服务权限（DownloadService 必须） -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- 通知权限（Android 13+） -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- 唤醒锁（下载时保持 CPU 运行） -->
+    <!-- 唤醒锁（下载时保持 CPU 运行，防止休眠中断） -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
@@ -38,17 +38,32 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
 
+        <!-- 主 Activity -->
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.AutoAppStore"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.AutoAppStore">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!--
+            InstallConfirmActivity — 透明跳板 Activity。
+            解决：从 BroadcastReceiver/Service 的非 Activity Context 无法启动安装确认弹窗的问题。
+            android:theme 设为透明，用户只能看到系统安装弹窗，看不到此 Activity 本身。
+            android:exported="false" 防止外部应用直接调用。
+        -->
+        <activity
+            android:name=".installer.InstallConfirmActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true" />
+
+        <!-- 安装结果广播接收器 -->
         <receiver
             android:name=".installer.InstallReceiver"
             android:exported="true">
@@ -57,12 +72,13 @@
             </intent-filter>
         </receiver>
 
-        <!-- DownloadService: foregroundServiceType=dataSync 对应 FOREGROUND_SERVICE_DATA_SYNC 权限 -->
+        <!-- 下载前台服务 -->
         <service
             android:name=".service.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+        <!-- FileProvider：提供 APK 文件 URI 给系统安装器 -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

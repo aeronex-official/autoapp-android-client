@@ -1,12 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    FileProvider 路径配置
+    对应 DownloadService 中写入文件的位置：
+      getExternalFilesDir("apk_downloads") → external-files-path / apk_downloads/
+      filesDir                             → files-path / .（内部存储备用路径）
+-->
 <paths>
-    <external-path
-        name="external_files"
+    <!-- 外部存储私有目录：/sdcard/Android/data/<pkg>/files/apk_downloads/ -->
+    <external-files-path
+        name="apk_downloads"
+        path="apk_downloads/" />
+
+    <!-- 内部存储（备用，filesDir 不可用时）-->
+    <files-path
+        name="internal_files"
         path="." />
+
+    <!-- 缓存目录（兼容旧版本路径）-->
     <cache-path
         name="cache_files"
         path="." />
-    <files-path
-        name="internal_files"
+
+    <!-- 外部存储根路径（兼容旧版 installViaIntent 路径）-->
+    <external-path
+        name="external_files"
         path="." />
 </paths>
