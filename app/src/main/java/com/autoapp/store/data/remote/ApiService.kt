@@ -42,4 +42,14 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: CreateSubscriptionRequest
     ): Response<SubscriptionResponse>
+
+    /**
+     * 上报下载结果状态（success / failed）到后端。
+     * 后端凭此更新 Download 记录的 status 字段，供管理台展示。
+     */
+    @POST("apps/{appId}/download-status")
+    suspend fun reportDownloadStatus(
+        @Path("appId") appId: String,
+        @Body body: Map<String, String>
+    ): Response<Unit>
 }

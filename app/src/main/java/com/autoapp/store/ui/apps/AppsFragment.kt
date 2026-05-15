@@ -1,7 +1,10 @@
 package com.autoapp.store.ui.apps
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -15,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.GridLayoutManager
 import com.autoapp.store.data.local.PrefsManager
 import com.autoapp.store.databinding.FragmentAppsBinding
@@ -38,6 +42,29 @@ class AppsFragment : Fragment() {
         ActivityResultContracts.RequestPermission()
     ) { /* 无论结果如何都继续，通知只是辅助 */ }
 
+    // ── LocalBroadcast receiver for download progress ──────────────
+    private val downloadProgressReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val appId = intent.getStringExtra(DownloadService.EXTRA_PROGRESS_APP_ID) ?: return
+            when (intent.action) {
+                DownloadService.ACTION_PROGRESS -> {
+                    val percent = intent.getIntExtra(DownloadService.EXTRA_PROGRESS_PERCENT, -1)
+                    val label   = intent.getStringExtra(DownloadService.EXTRA_PROGRESS_LABEL) ?: ""
+                    adapter.setDownloading(appId, percent, label)
+                }
+                DownloadService.ACTION_SUCCESS -> {
+                    adapter.setSuccess(appId)
+                }
+                DownloadService.ACTION_ERROR -> {
+                    val msg = intent.getStringExtra(DownloadService.EXTRA_ERROR_MESSAGE) ?: "下载失败"
+                    adapter.setError(appId, msg)
+                }
+            }
+        }
+    }
+
+    private lateinit var lbm: LocalBroadcastManager
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -59,6 +86,15 @@ class AppsFragment : Fragment() {
         binding.recyclerView.adapter = adapter
 
         binding.swipeRefresh.setOnRefreshListener { viewModel.loadApps() }
+
+        // ── 注册 LocalBroadcast 接收下载进度 ─────────────────────────
+        lbm = LocalBroadcastManager.getInstance(requireContext())
+        val filter = IntentFilter().apply {
+            addAction(DownloadService.ACTION_PROGRESS)
+            addAction(DownloadService.ACTION_SUCCESS)
+            addAction(DownloadService.ACTION_ERROR)
+        }
+        lbm.registerReceiver(downloadProgressReceiver, filter)
 
         // ---- Observers ----
 
@@ -177,6 +213,8 @@ class AppsFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // 注销广播接收器，防止内存泄漏
+        lbm.unregisterReceiver(downloadProgressReceiver)
         _binding = null
     }
 }
